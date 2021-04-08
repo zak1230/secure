@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:oauth2-provider="http://www.mulesoft.org/schema/mule/oauth2-provider"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/oauth2-provider http://www.mulesoft.org/schema/mule/oauth2-provider/current/mule-oauth2-provider.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<os:object-store name="Client_Object_store" doc:name="Object store" doc:id="60adf1e9-61ab-4a4a-bba2-4ac788017482" />
+	<os:object-store name="token_Object_store" doc:name="Object store" doc:id="14bd5753-6dfe-44b5-9033-aa4e76bd22c3" />
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="99e379e6-6bd7-40ab-93c6-dc75acf48ada" >
+		<http:listener-connection host="localhost" port="8081" />
+	</http:listener-config>
+	<oauth2-provider:config name="OAuth2_Provider_Config" doc:name="OAuth2 Provider Config" doc:id="a150aa94-d509-4b9a-a39e-9538a0707443" providerName="OAuth2_Provider" listenerConfig="HTTP_Listener_config" clientStore="Client_Object_store" supportedGrantTypes="CLIENT_CREDENTIALS" >
+		<oauth2-provider:token-config tokenStore="token_Object_store" />
+	</oauth2-provider:config>
+	<flow name="oauth2.0Flow" doc:id="f83c50aa-500e-4ded-990e-1d1f97a9fb92" >
+		<http:listener doc:name="Listener" doc:id="dd2cb434-c4db-4468-876d-a6b61ce24562" config-ref="HTTP_Listener_config" path="createClient"/>
+		<oauth2-provider:create-client doc:name="Create client" doc:id="a5f0dd26-b943-4c66-9031-6a5ec47307c2" config-ref="OAuth2_Provider_Config" clientId="#[attributes.headers.client_id]" type="CONFIDENTIAL" secret="#[attributes.headers.client_secret]" clientName="#[attributes.headers.client_name]" description='#[""]' principal='#[""]' redirectUris='#[["demo.com"]]' authorizedGrantTypes='#[["CLIENT_CREDENTIALS"]]' failIfPresent="true" scopes="#[[]]"/>
+		<set-payload value="Client created successfully" doc:name="setResponse" doc:id="4b9a8e65-d159-4339-a08c-edba1e9b917c" />
+	</flow>
+	<flow name="oauth2.0Flow1" doc:id="4693b1bc-f7bd-4a74-af89-1d4e6108e218" >
+		<http:listener doc:name="Listener" doc:id="12f43f5d-61b4-42e0-b22a-28efd33569ef" config-ref="HTTP_Listener_config" path="validate"/>
+		<oauth2-provider:validate-token doc:name="Validate token" doc:id="69ebdd2a-8154-4678-934a-81bd4337561e" config-ref="OAuth2_Provider_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="679bdd51-9070-4c3d-8584-905507d3bf09" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+
+	payload
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
